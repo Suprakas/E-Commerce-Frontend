@@ -1,12 +1,26 @@
 import { useState } from "react";
-import ProductCard from "../components/Product-Card";
-
-
-import { Skeleton } from "../components/Loader";
+import ProductCard from "../components/product-card";
+import {
+  useCategoriesQuery,
+  useSearchProductsQuery,
+} from "../redux/api/productAPI";
+import type { CustomError } from "../types/api-types";
+import toast from "react-hot-toast";
+import { Skeleton } from "../components/loader";
+import type { CartItem } from "../types/types";
+import { addToCart } from "../redux/reducer/cartReducer";
+import { useDispatch } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 
 const Search = () => {
   const searchQuery = useSearchParams()[0];
+
+  const {
+    data: categoriesResponse,
+    isLoading: loadingCategories,
+    isError,
+    error,
+  } = useCategoriesQuery("");
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("");
@@ -14,11 +28,38 @@ const Search = () => {
   const [category, setCategory] = useState(searchQuery.get("category") || "");
   const [page, setPage] = useState(1);
 
-  const addToCartHandler = () => {};
+  const {
+    isLoading: productLoading,
+    data: searchedData,
+    isError: productIsError,
+    error: productError,
+  } = useSearchProductsQuery({
+    search,
+    sort,
+    category,
+    page,
+    price: maxPrice,
+  });
 
-  const isPrevPage = page>1;
-  const isNextPage = page<4;
+  const dispatch = useDispatch();
 
+  const addToCartHandler = (cartItem: CartItem) => {
+    if (cartItem.stock < 1) return toast.error("Out of Stock");
+    dispatch(addToCart(cartItem));
+    toast.success("Added to cart");
+  };
+
+  const isPrevPage = page > 1;
+  const isNextPage = page < 4;
+
+  if (isError) {
+    const err = error as CustomError;
+    toast.error(err.data.message);
+  }
+  if (productIsError) {
+    const err = productError as CustomError;
+    toast.error(err.data.message);
+  }
   return (
     <div className="product-search-page">
       <aside>
@@ -50,8 +91,12 @@ const Search = () => {
             onChange={(e) => setCategory(e.target.value)}
           >
             <option value="">ALL</option>
-            <option value="">Sample 1</option>
-            <option value="">Sample 2</option>
+            {!loadingCategories &&
+              categoriesResponse?.categories.map((i) => (
+                <option key={i} value={i}>
+                  {i.toUpperCase()}
+                </option>
+              ))}
           </select>
         </div>
       </aside>
@@ -63,17 +108,26 @@ const Search = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-          <div className="search-product-list">   
-              <ProductCard
-                 productId= "gjhgjvj"
-                 name="Macbook"
-                 price={45678}
-                 stock={5}
-                 handler={addToCartHandler}
-                 photo= "https://m.media-amazon.com/images/I/71jG+e7roXL._SX679_.jpg"
-              />
-          </div>
 
+        {productLoading ? (
+          <Skeleton length={10} />
+        ) : (
+          <div className="search-product-list">
+            {searchedData?.products.map((i) => (
+              <ProductCard
+                key={i._id}
+                productId={i._id}
+                name={i.name}
+                price={i.price}
+                stock={i.stock}
+                handler={addToCartHandler}
+                photos={i.photos}
+              />
+            ))}
+          </div>
+        )}
+
+        {searchedData && searchedData.totalPage > 1 && (
           <article>
             <button
               disabled={!isPrevPage}
@@ -82,7 +136,7 @@ const Search = () => {
               Prev
             </button>
             <span>
-              {page} of {4}
+              {page} of {searchedData.totalPage}
             </span>
             <button
               disabled={!isNextPage}
@@ -91,6 +145,7 @@ const Search = () => {
               Next
             </button>
           </article>
+        )}
       </main>
     </div>
   );

@@ -24,8 +24,8 @@ function TableHOC<T extends object>(
       columns,
       state: {
         pagination: {
-          pageIndex: 0,
           pageSize: 6,
+          pageIndex: 0,
         },
       },
       getCoreRowModel: getCoreRowModel(),

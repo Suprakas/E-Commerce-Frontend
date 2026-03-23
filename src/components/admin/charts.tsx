@@ -7,12 +7,12 @@ import {
   Tooltip,
   Legend,
   type ChartData,
+  type ChartOptions,
   ArcElement,
   PointElement,
   LineElement,
   Filler,
 } from "chart.js";
-import type { ChartOptions } from "chart.js";
 import { Bar, Doughnut, Line, Pie } from "react-chartjs-2";
 
 ChartJS.register(
@@ -56,10 +56,10 @@ export const BarChart = ({
     indexAxis: horizontal ? "y" : "x",
     plugins: {
       legend: {
-        display: true,
+        display: false,
       },
       title: {
-        display: true,
+        display: false,
       },
     },
 
