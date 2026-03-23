@@ -1,8 +1,8 @@
 import { useState } from "react";
-import ProductCard from "../components/product-card";
+import ProductCard from "../components/Product-Card";
 
 
-import { Skeleton } from "../components/loader";
+import { Skeleton } from "../components/Loader";
 import { useSearchParams } from "react-router-dom";
 
 const Search = () => {

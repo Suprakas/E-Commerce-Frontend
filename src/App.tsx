@@ -2,10 +2,10 @@
 import { Suspense, lazy } from "react";
 import { Toaster } from "react-hot-toast";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-import Header from "./components/header";
+import Header from "./components/Header";
 // import Loader from "./components/loader";
 // import ProtectedRoute from "./components/protected-route";
-import Footer from "./components/footer";
+import Footer from "./components/Footer";
 
 const Home = lazy(() => import("./pages/home"));
 const Search = lazy(() => import("./pages/search"));

@@ -1,7 +1,7 @@
 
 
 import { Link } from "react-router-dom";
-import ProductCard from "../components/product-card";
+import ProductCard from "../components/Product-Card";
 
 
 const home = () => {

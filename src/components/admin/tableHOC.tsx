@@ -2,93 +2,92 @@ import {
   AiOutlineSortAscending,
   AiOutlineSortDescending,
 } from "react-icons/ai";
-import type { Column, TableOptions, UsePaginationInstanceProps, UseSortByInstanceProps, TableInstance, UsePaginationState, TableState } from "react-table";
 import {
-  usePagination,
-  useSortBy,
-  useTable,
-} from "react-table";
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getPaginationRowModel,
+  flexRender,
+  type ColumnDef,
+} from "@tanstack/react-table";
 
-function TableHOC<T extends Object>(
-  columns: Column<T>[],
+function TableHOC<T extends object>(
+  columns: ColumnDef<T>[],
   data: T[],
   containerClassname: string,
   heading: string,
   showPagination: boolean = false
 ) {
   return function HOC() {
-    const options: TableOptions<T> = {
-      columns,
+    const table = useReactTable({
       data,
-      initialState: {
-        pageIndex: 0,
-        pageSize: 6,
-      } as Partial<TableState<T>>,
-    };
-
-    const tableInstance = useTable<T>(options, useSortBy, usePagination) as TableInstance<T> & UsePaginationInstanceProps<T> & UseSortByInstanceProps<T> & { state: UsePaginationState<T> };
-    const {
-      getTableProps,
-      getTableBodyProps,
-      headerGroups,
-      page,
-      prepareRow,
-      nextPage,
-      pageCount,
-      state: { pageIndex },
-      previousPage,
-      canNextPage,
-      canPreviousPage,
-    } = tableInstance;
+      columns,
+      state: {
+        pagination: {
+          pageIndex: 0,
+          pageSize: 6,
+        },
+      },
+      getCoreRowModel: getCoreRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+    });
 
     return (
       <div className={containerClassname}>
         <h2 className="heading">{heading}</h2>
 
-        <table className="table" {...getTableProps()}>
+        <table className="table">
           <thead>
-            {headerGroups.map((headerGroup) => (
-              <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column) => (
-                  <th {...column.getHeaderProps((column).getSortByToggleProps())}>
-                    {column.render("Header")}
-                    {(column as any).isSorted && (
-                      <span>
-                        {" "}
-                        {(column as any).isSortedDesc ? (
-                          <AiOutlineSortDescending />
-                        ) : (
-                          <AiOutlineSortAscending />
-                        )}
-                      </span>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
                     )}
+                    {{
+                      asc: <AiOutlineSortAscending />,
+                      desc: <AiOutlineSortDescending />,
+                    }[header.column.getIsSorted() as string] ?? null}
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-          <tbody {...getTableBodyProps()}>
-            {page.map((row) => {
-              prepareRow(row);
-
-              return (
-                <tr {...row.getRowProps()}>
-                  {row.cells.map((cell) => (
-                    <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
-                  ))}
-                </tr>
-              );
-            })}
+          <tbody>
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
           </tbody>
         </table>
 
         {showPagination && (
           <div className="table-pagination">
-            <button disabled={!canPreviousPage} onClick={previousPage}>
+            <button
+              disabled={!table.getCanPreviousPage()}
+              onClick={() => table.previousPage()}
+            >
               Prev
             </button>
-            <span>{`${pageIndex + 1} of ${pageCount}`}</span>
-            <button disabled={!canNextPage} onClick={nextPage}>
+            <span>
+              {table.getState().pagination.pageIndex + 1} of{" "}
+              {table.getPageCount()}
+            </span>
+            <button
+              disabled={!table.getCanNextPage()}
+              onClick={() => table.nextPage()}
+            >
               Next
             </button>
           </div>
